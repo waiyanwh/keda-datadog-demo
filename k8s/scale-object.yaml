@@ -1,0 +1,25 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: datadog-scaledobject
+  namespace: keda-datadog-demo
+spec:
+  scaleTargetRef:
+    name: crud-api
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+  - type: datadog
+    # Optional: (Value or AverageValue). Whether the target value is global or average per pod. Default: AverageValue
+    metricType: "Value"
+    metadata:
+      # Required: datadog metric query
+      query: "sum:trace.express.request.hits{env:staging,service:crud-operation-with-jsonfile }.as_count()"
+      # Required: according to the number of query result, to scale the TargetRef
+      queryValue: "50"
+      # Optional: The time window (in seconds) to retrieve metrics from Datadog. Default: 90
+      age: "90"
+      # Optional: The metric value to return to the HPA if a metric value wasn't found for the specified time window
+      metricUnavailableValue: "0"
+    authenticationRef:
+      name: keda-trigger-auth-datadog-secret
